@@ -265,6 +265,19 @@ class StreamingContext(object):
         extstream = self._jssc.externalStream(streamClassName, *args)
         return DStream(extstream, self, deserializer)
 
+    def reflectedStream(self, streamFactoryClassName, deserializer, *args):
+        """
+
+        :param streamFactoryClassName:
+        :param deserializer:
+        :param args:
+        :return:
+        """
+        reflectedStream = self._jssc.reflectedStream(
+            streamFactoryClassName,
+            ListConverter().convert(list(args), SparkContext._gateway._gateway_client))
+        return DStream(reflectedStream, self, deserializer)
+
     def _check_serializers(self, rdds):
         # make sure they have same serializer
         if len(set(rdd._jrdd_deserializer for rdd in rdds)) > 1:

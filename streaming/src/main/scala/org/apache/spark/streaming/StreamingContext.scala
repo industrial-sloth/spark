@@ -383,10 +383,6 @@ class StreamingContext private[streaming] (
     val streamFactoryClazz: Class[_ <:ReflectedDStreamFactory[T]] =
       Utils.classForName(reflectedStreamFactoryClass)
         .asInstanceOf[Class[_ <:ReflectedDStreamFactory[T]]]
-//    val parameterTypes: Seq[Class[_]] =
-//      List.fill[Class[_]](factoryClassParams.length)(classOf[String])
-//    val cons = streamFactoryClazz.getConstructor(parameterTypes:_*)
-//    cons.newInstance(factoryClassParams:_*).instantiate(this)
     val cons = streamFactoryClazz.getConstructor(classOf[Seq[String]])
     cons.newInstance(factoryClassParams).instantiate(this)
   }

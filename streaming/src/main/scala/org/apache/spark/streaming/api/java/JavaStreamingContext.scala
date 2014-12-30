@@ -219,6 +219,13 @@ class JavaStreamingContext(val ssc: StreamingContext) extends Closeable {
     ssc.externalStream[T](inputDStreamClass, inputClassParams:_*)
   }
 
+  def reflectedStream[T](reflectedStreamFactoryClass: String,
+                         factoryClassParams: java.util.List[String]): JavaInputDStream[T] = {
+    implicit val cmt: ClassTag[T] =
+      implicitly[ClassTag[AnyRef]].asInstanceOf[ClassTag[T]]
+    ssc.reflectedStream[T](reflectedStreamFactoryClass, factoryClassParams:_*)
+  }
+
   /**
    * Create an input stream from network source hostname:port, where data is received
    * as serialized blocks (serialized using the Spark's serializer) that can be directly
