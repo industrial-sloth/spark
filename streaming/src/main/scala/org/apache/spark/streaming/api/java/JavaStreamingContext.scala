@@ -35,7 +35,7 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.scheduler.StreamingListener
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.streaming.dstream.{PluggableInputDStream, ReceiverInputDStream, DStream}
+import org.apache.spark.streaming.dstream.{InputDStream, PluggableInputDStream, ReceiverInputDStream, DStream}
 import org.apache.spark.streaming.receiver.Receiver
 
 /**
@@ -210,6 +210,13 @@ class JavaStreamingContext(val ssc: StreamingContext) extends Closeable {
 
   def zeromqTextStream(publisherUrl: String, topic: String): JavaDStream[String] = {
     ssc.zeromqTextStream(publisherUrl, topic)
+  }
+
+  def externalStream[T](inputDStreamClass: String, inputClassParams: String*)
+  : InputDStream[T] = {
+    implicit val cmt: ClassTag[T] =
+      implicitly[ClassTag[AnyRef]].asInstanceOf[ClassTag[T]]
+    ssc.externalStream[T](inputDStreamClass, inputClassParams:_*)
   }
 
   /**

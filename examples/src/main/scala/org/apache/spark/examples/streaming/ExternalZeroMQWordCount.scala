@@ -33,8 +33,10 @@ object ExternalZeroMQWordCount {
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
     // For this stream, a zeroMQ publisher should be running.
-    val lines = ssc.externalStream[String](
-      "org.apache.spark.streaming.thunder.zeromq.WrappedZeroMQReceiver", url, topic)
+    val lines = ssc.reflectedStream[String](
+      "org.apache.spark.streaming.thunder.zeromq.ReflectedZeroMQStreamFactory", url, topic)
+//    val lines = ssc.externalStream[String](
+//      "org.apache.spark.streaming.thunder.zeromq.WrappedZeroMQReceiver", url, topic)
     //val lines = ZeroMQUtils.createStream(ssc, url, Subscribe(topic), bytesToStringIterator _)
     val words = lines.flatMap(_.split(" "))
     val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)

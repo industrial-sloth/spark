@@ -255,6 +255,16 @@ class StreamingContext(object):
         zmqstream = self._jssc.zeromqTextStream(publisherUrl, topic)
         return DStream(zmqstream, self, UTF8Deserializer())
 
+    def externalStream(self, streamClassName, deserializer, *args):
+        """
+
+        :param streamClassName: fully qualified classname of InputDStream subclass
+
+        :return:
+        """
+        extstream = self._jssc.externalStream(streamClassName, *args)
+        return DStream(extstream, self, deserializer)
+
     def _check_serializers(self, rdds):
         # make sure they have same serializer
         if len(set(rdd._jrdd_deserializer for rdd in rdds)) > 1:

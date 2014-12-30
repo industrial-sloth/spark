@@ -55,14 +55,23 @@ class WrappedZeroMQReceiver(@transient ssc_ : StreamingContext,
    */
   override def getReceiver(): Receiver[String] = {
     //delegate
+//    new ActorReceiver[String](
+//        Props(new ZeroMQReceiver(publisherUrl,
+//          Subscribe(ByteString(topic)),
+//          (x: Seq[ByteString]) => x.map(_.utf8String).iterator )),
+//          //WrappedZeroMQReceiver.converter)),
+//        "WrappedZeroMQReceiver",
+//        StorageLevel.MEMORY_AND_DISK_SER_2,
+//        ActorSupervisorStrategy.defaultStrategy
+//    )
     new ActorReceiver[String](
-        Props(new ZeroMQReceiver(publisherUrl,
-          Subscribe(ByteString(topic)),
-          (x: Seq[ByteString]) => x.map(_.utf8String).iterator )),
-          //WrappedZeroMQReceiver.converter)),
-        "WrappedZeroMQReceiver",
-        StorageLevel.MEMORY_AND_DISK_SER_2,
-        ActorSupervisorStrategy.defaultStrategy
+      Props(new ZeroMQReceiver("tcp://127.0.1.1:1234",
+        Subscribe(ByteString("foo")),
+        (x: Seq[ByteString]) => x.map(_.utf8String).iterator )),
+      //WrappedZeroMQReceiver.converter)),
+      "WrappedZeroMQReceiver",
+      StorageLevel.MEMORY_AND_DISK_SER_2,
+      ActorSupervisorStrategy.defaultStrategy
     )
   }
 }

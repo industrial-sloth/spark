@@ -839,7 +839,8 @@ class DAGScheduler(
     } catch {
       // In the case of a failure during serialization, abort the stage.
       case e: NotSerializableException =>
-        abortStage(stage, "Task not serializable: " + e.toString)
+        //abortStage(stage, "Task not serializable: " + e.toString)
+        abortStage(stage, "Task not serializable: " + e.toString + "\n" + e.getStackTraceString)
         runningStages -= stage
         return
       case NonFatal(e) =>

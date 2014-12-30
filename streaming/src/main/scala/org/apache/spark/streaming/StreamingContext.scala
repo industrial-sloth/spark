@@ -18,11 +18,13 @@
 package org.apache.spark.streaming
 
 import java.io.InputStream
+import java.lang.reflect.Constructor
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.util.ByteString
 import akka.zeromq.Subscribe
 import org.apache.spark.streaming.thunder.zeromq.ZeroMQReceiver
+import org.apache.spark.util.Utils
 
 import scala.collection.Map
 import scala.collection.mutable.Queue
@@ -375,6 +377,32 @@ class StreamingContext private[streaming] (
     fileStream[LongWritable, Text, TextInputFormat](directory).map(_._2.toString)
   }
 
+  def reflectedStream[T: ClassTag]
+  (reflectedStreamFactoryClass: String,
+   factoryClassParams: String*): InputDStream[T] = {
+    val streamFactoryClazz: Class[_ <:ReflectedDStreamFactory[T]] =
+      Utils.classForName(reflectedStreamFactoryClass)
+        .asInstanceOf[Class[_ <:ReflectedDStreamFactory[T]]]
+//    val parameterTypes: Seq[Class[_]] =
+//      List.fill[Class[_]](factoryClassParams.length)(classOf[String])
+//    val cons = streamFactoryClazz.getConstructor(parameterTypes:_*)
+//    cons.newInstance(factoryClassParams:_*).instantiate(this)
+    val cons = streamFactoryClazz.getConstructor(classOf[Seq[String]])
+    cons.newInstance(factoryClassParams).instantiate(this)
+  }
+
+  def externalStream[
+  T: ClassTag
+  ] (inputDStreamClass: String, inputClassParams: String*): InputDStream[T] = {
+    val instreamc: Class[_ <:InputDStream[T]] =
+      Utils.classForName(inputDStreamClass).asInstanceOf[Class[_ <:InputDStream[T]]]
+    // val parameterTypes: Class[_]* = Array[Class[_]](
+    val parameterTypes: Seq[Class[_]]= classOf[StreamingContext] +:
+      List.fill[Class[_]](inputClassParams.length)(classOf[String])
+    val cons = instreamc.getConstructor(parameterTypes:_*)
+    val parameters: Seq[AnyRef] = this +: inputClassParams
+    cons.newInstance(parameters:_*)
+  }
 
   def zeromqTextStream(publisherUrl: String, topic: String): DStream[String] = {
     // def bytesToStringIterator(x: Seq[ByteString]) = (x.map(_.utf8String)).iterator
