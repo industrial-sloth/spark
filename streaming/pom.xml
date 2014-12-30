@@ -40,6 +40,13 @@
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- added for thunder zeromq -->
+    <dependency>
+      <groupId>${akka.group}</groupId>
+      <artifactId>akka-zeromq_${scala.binary.version}</artifactId>
+      <version>${akka.version}</version>
+    </dependency>
+    <!-- end add for thunder zeromq -->
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>

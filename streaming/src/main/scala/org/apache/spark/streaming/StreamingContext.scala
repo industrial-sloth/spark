@@ -20,6 +20,10 @@ package org.apache.spark.streaming
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicInteger
 
+import akka.util.ByteString
+import akka.zeromq.Subscribe
+import org.apache.spark.streaming.thunder.zeromq.ZeroMQReceiver
+
 import scala.collection.Map
 import scala.collection.mutable.Queue
 import scala.reflect.ClassTag
@@ -369,6 +373,18 @@ class StreamingContext private[streaming] (
    */
   def textFileStream(directory: String): DStream[String] = {
     fileStream[LongWritable, Text, TextInputFormat](directory).map(_._2.toString)
+  }
+
+
+  def zeromqTextStream(publisherUrl: String, topic: String): DStream[String] = {
+    // def bytesToStringIterator(x: Seq[ByteString]) = (x.map(_.utf8String)).iterator
+    val bytesToStringIterator = (x: Seq[ByteString]) => { (x.map(_.utf8String)).iterator }
+    //    def bytesToByteArrayIterator(x: Seq[ByteString]) =
+
+    // For this stream, a zeroMQ publisher should be running.
+    actorStream[String](Props(
+      new ZeroMQReceiver[String](publisherUrl, Subscribe(topic), bytesToStringIterator)),
+      "ZeroMQStringReceiver")
   }
 
   /**

@@ -208,6 +208,10 @@ class JavaStreamingContext(val ssc: StreamingContext) extends Closeable {
     ssc.textFileStream(directory)
   }
 
+  def zeromqTextStream(publisherUrl: String, topic: String): JavaDStream[String] = {
+    ssc.zeromqTextStream(publisherUrl, topic)
+  }
+
   /**
    * Create an input stream from network source hostname:port, where data is received
    * as serialized blocks (serialized using the Spark's serializer) that can be directly

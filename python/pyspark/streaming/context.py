@@ -251,6 +251,10 @@ class StreamingContext(object):
         """
         return DStream(self._jssc.textFileStream(directory), self, UTF8Deserializer())
 
+    def zeromqTextStream(self, publisherUrl, topic):
+        zmqstream = self._jssc.zeromqTextStream(publisherUrl, topic)
+        return DStream(zmqstream, self, UTF8Deserializer())
+
     def _check_serializers(self, rdds):
         # make sure they have same serializer
         if len(set(rdd._jrdd_deserializer for rdd in rdds)) > 1:
