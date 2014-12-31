@@ -251,27 +251,25 @@ class StreamingContext(object):
         """
         return DStream(self._jssc.textFileStream(directory), self, UTF8Deserializer())
 
-    def zeromqTextStream(self, publisherUrl, topic):
-        zmqstream = self._jssc.zeromqTextStream(publisherUrl, topic)
-        return DStream(zmqstream, self, UTF8Deserializer())
-
-    def externalStream(self, streamClassName, deserializer, *args):
-        """
-
-        :param streamClassName: fully qualified classname of InputDStream subclass
-
-        :return:
-        """
-        extstream = self._jssc.externalStream(streamClassName, *args)
-        return DStream(extstream, self, deserializer)
-
     def reflectedStream(self, streamFactoryClassName, deserializer, *args):
         """
+        Create an input stream by reflection on a dynamically-loaded Scala or Java class.
 
-        :param streamFactoryClassName:
-        :param deserializer:
-        :param args:
-        :return:
+        This method requires that an implementation of
+        org.apache.spark.streaming.dstream.ReflectedDStreamFactory be available on the
+        classpath of the driver (and executor, for ReceiverDStreams). This class will be loaded
+        dynamically and used to instantiate a new DStream.
+        
+        See zeromq_wordcount.py and
+        org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory.scala for example usage.
+
+        @param streamFactoryClassName: fully-qualified string classname of implementation of
+          ReflectedDStreamFactory to be loaded; e.g.
+          "org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory". This class must be
+          locatable on the driver / executor classpath.
+        @param deserializer: instance of pyspark.serializers.Serializer to use for deserialization
+        @param args: string arguments to be passed to the ReflectedDStreamFactory
+        @return: new DStream instance
         """
         reflectedStream = self._jssc.reflectedStream(
             streamFactoryClassName,
