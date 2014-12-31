@@ -16,7 +16,24 @@
 #
 
 """
+A sample wordcount using ZeroMQ in Python via reflection, based on the scala
+ZeroMQWordCount example.
 
+To work with zeroMQ, some native libraries have to be installed.
+Install zeroMQ (release 2.1) core libraries. [ZeroMQ Install guide]
+(http://www.zeromq.org/intro:get-the-software)
+
+Usage: zeromq_wordcount.py <zeroMQurl> <topic>
+   <zeroMQurl> and <topic> describe where zeroMq publisher is running.
+
+To run this locally, first launch the publisher from the scala ZeroMQWordCount example:
+    `$ bin/run-example \
+      org.apache.spark.examples.streaming.SimpleZeroMQPublisher tcp://127.0.1.1:1234 foo.bar`
+ and then run the subscriber, making sure to add the external jar with zeromq support to the
+ classpath via the spark-submit --jars flag:
+    `$ bin/spark-submit \
+    --jars external/zeromq/target/spark-streaming-zeromq_2.10-1.3.0-SNAPSHOT.jar \
+    examples/src/main/python/streaming/zeromq_wordcount.py tcp://127.0.1.1:1234 foo`
 """
 
 import sys
@@ -33,7 +50,7 @@ if __name__ == "__main__":
     ssc = StreamingContext(sc, 1)
 
     lines = ssc.reflectedStream(
-        "org.apache.spark.streaming.thunder.zeromq.ReflectedZeroMQStreamFactory",
+        "org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory",
         UTF8Deserializer(),
         sys.argv[1], sys.argv[2])
     counts = lines.flatMap(lambda line: line.strip().split()) \

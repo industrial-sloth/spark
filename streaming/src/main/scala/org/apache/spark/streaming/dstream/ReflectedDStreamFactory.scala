@@ -20,7 +20,28 @@ import org.apache.spark.streaming.StreamingContext
 
 import scala.reflect.ClassTag
 
+/**
+ * Abstract serializable factory for [[org.apache.spark.streaming.dstream.InputDStream]] instances.
+ *
+ * Intended to be used by the [[org.apache.spark.streaming.StreamingContext]] reflectedStream
+ * method.
+ *
+ * See [[org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory]] for an example concrete
+ * implementation.
+ *
+ * @param streamParams Parameters to be used during stream instantiation.
+ * @tparam T Data type handled by the instantiated DStreams.
+ */
 abstract class ReflectedDStreamFactory[T: ClassTag](streamParams: Seq[String])
 extends java.io.Serializable {
-  def instantiate(ssc: StreamingContext): InputDStream[T]
+  /**
+   * Creates a new [[org.apache.spark.streaming.dstream.InputDStream]] instance.
+   *
+   * Implementations should create a new InputDStream instance of the appropriate
+   * type, using the parameters passed in the factory constructor.
+   *
+   * @param ssc The active StreamingContext.
+   * @return new InputDStream
+   */
+  def instantiateStream(ssc: StreamingContext): InputDStream[T]
 }

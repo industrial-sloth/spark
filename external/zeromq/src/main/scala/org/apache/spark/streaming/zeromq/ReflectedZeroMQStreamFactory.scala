@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.spark.streaming.thunder.zeromq
+package org.apache.spark.streaming.zeromq
 
 import akka.actor.Props
 import akka.util.ByteString
@@ -24,17 +24,33 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{PluggableInputDStream, InputDStream, ReflectedDStreamFactory}
 import org.apache.spark.streaming.receiver.{ActorSupervisorStrategy, ActorReceiver}
 
-
+/**
+ * Creates [[org.apache.spark.streaming.zeromq.ZeroMQReceiver]] streams.
+ *
+ * This adapter class enables ZeroMQ streams to be instantiated via the
+ * [[org.apache.spark.streaming.StreamingContext]] reflectedStream method.
+ *
+ * It expects two String arguments in streamParams:
+ * 1. URL of the ZeroMQ publisher stream, e.g. "tcp://127.0.1.1:1234"
+ * 2. topic to which to subscribe
+ *
+ * @param streamParams parameters to pass to the underlying ZeroMQReceiver
+ */
 class ReflectedZeroMQStreamFactory(streamParams: Seq[String])
   extends ReflectedDStreamFactory[String](streamParams) {
 
-  override def instantiate(ssc: StreamingContext): InputDStream[String] = {
+  /**
+   * Creates a new ZeroMQ subscriber DStream[String] instance.
+   *
+   * @param ssc The active StreamingContext.
+   * @return new InputDStream[String]
+   */
+  override def instantiateStream(ssc: StreamingContext): InputDStream[String] = {
     val receiver = new ActorReceiver[String](
       Props(new ZeroMQReceiver(streamParams(0),
         Subscribe(ByteString(streamParams(1))),
         (x: Seq[ByteString]) => x.map(_.utf8String).iterator )),
-      //WrappedZeroMQReceiver.converter)),
-      "WrappedZeroMQReceiver",
+      "ZeroMQReceiverFromReflectedFactory",
       StorageLevel.MEMORY_AND_DISK_SER_2,
       ActorSupervisorStrategy.defaultStrategy
     )

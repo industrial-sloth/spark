@@ -18,12 +18,8 @@
 package org.apache.spark.streaming
 
 import java.io.InputStream
-import java.lang.reflect.Constructor
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.util.ByteString
-import akka.zeromq.Subscribe
-import org.apache.spark.streaming.thunder.zeromq.ZeroMQReceiver
 import org.apache.spark.util.Utils
 
 import scala.collection.Map
@@ -377,6 +373,18 @@ class StreamingContext private[streaming] (
     fileStream[LongWritable, Text, TextInputFormat](directory).map(_._2.toString)
   }
 
+  /**
+   * Create an input stream by reflection on a
+   * [[org.apache.spark.streaming.dstream.ReflectedDStreamFactory]] subclass.
+   *
+   * This allows InputDStream implementations to be loaded dynamically, without having to be
+   * compiled in to the org.apache.spark hierarchy.
+   *
+   * @param reflectedStreamFactoryClass Fully-qualified classname of a ReflectedDStreamFactory
+   *    subclass (e.g. "org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory")
+   * @param factoryClassParams String parameters to be passed into factory constructor
+   * @return new InputDStream[T] instance
+   */
   def reflectedStream[T: ClassTag]
   (reflectedStreamFactoryClass: String,
    factoryClassParams: String*): InputDStream[T] = {
@@ -384,31 +392,7 @@ class StreamingContext private[streaming] (
       Utils.classForName(reflectedStreamFactoryClass)
         .asInstanceOf[Class[_ <:ReflectedDStreamFactory[T]]]
     val cons = streamFactoryClazz.getConstructor(classOf[Seq[String]])
-    cons.newInstance(factoryClassParams).instantiate(this)
-  }
-
-  def externalStream[
-  T: ClassTag
-  ] (inputDStreamClass: String, inputClassParams: String*): InputDStream[T] = {
-    val instreamc: Class[_ <:InputDStream[T]] =
-      Utils.classForName(inputDStreamClass).asInstanceOf[Class[_ <:InputDStream[T]]]
-    // val parameterTypes: Class[_]* = Array[Class[_]](
-    val parameterTypes: Seq[Class[_]]= classOf[StreamingContext] +:
-      List.fill[Class[_]](inputClassParams.length)(classOf[String])
-    val cons = instreamc.getConstructor(parameterTypes:_*)
-    val parameters: Seq[AnyRef] = this +: inputClassParams
-    cons.newInstance(parameters:_*)
-  }
-
-  def zeromqTextStream(publisherUrl: String, topic: String): DStream[String] = {
-    // def bytesToStringIterator(x: Seq[ByteString]) = (x.map(_.utf8String)).iterator
-    val bytesToStringIterator = (x: Seq[ByteString]) => { (x.map(_.utf8String)).iterator }
-    //    def bytesToByteArrayIterator(x: Seq[ByteString]) =
-
-    // For this stream, a zeroMQ publisher should be running.
-    actorStream[String](Props(
-      new ZeroMQReceiver[String](publisherUrl, Subscribe(topic), bytesToStringIterator)),
-      "ZeroMQStringReceiver")
+    cons.newInstance(factoryClassParams).instantiateStream(this)
   }
 
   /**

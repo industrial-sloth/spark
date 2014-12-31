@@ -20,24 +20,40 @@ package org.apache.spark.examples.streaming
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
-object ExternalZeroMQWordCount {
+// scalastyle:off
+/**
+ * An example using StreamingContext.reflectedStream, based on the ZeroMQWordCount example.
+ *
+ * To work with zeroMQ, some native libraries have to be installed.
+ * Install zeroMQ (release 2.1) core libraries. [ZeroMQ Install guide]
+ * (http://www.zeromq.org/intro:get-the-software)
+ *
+ * Usage: ReflectedZeroMQWordCount <zeroMQurl> <topic>
+ *   <zeroMQurl> and <topic> describe where zeroMq publisher is running.
+ *
+ * To run this example locally, you may run publisher as
+ *    `$ bin/run-example \
+ *      org.apache.spark.examples.streaming.SimpleZeroMQPublisher tcp://127.0.1.1:1234 foo.bar`
+ * and run the example as
+ *    `$ bin/run-example \
+ *      org.apache.spark.examples.streaming.ReflectedZeroMQWordCount tcp://127.0.1.1:1234 foo`
+ */
+// scalastyle:on
+object ReflectedZeroMQWordCount {
   def main(args: Array[String]) {
     if (args.length < 2) {
-      System.err.println("Usage: ExternalZeroMQWordCount <zeroMQurl> <topic>")
+      System.err.println("Usage: ReflectedZeroMQWordCount <zeroMQurl> <topic>")
       System.exit(1)
     }
     StreamingExamples.setStreamingLogLevels()
     val Seq(url, topic) = args.toSeq
-    val sparkConf = new SparkConf().setAppName("ExternalZeroMQWordCount")
+    val sparkConf = new SparkConf().setAppName("ReflectedZeroMQWordCount")
     // Create the context and set the batch size
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
     // For this stream, a zeroMQ publisher should be running.
     val lines = ssc.reflectedStream[String](
-      "org.apache.spark.streaming.thunder.zeromq.ReflectedZeroMQStreamFactory", url, topic)
-//    val lines = ssc.externalStream[String](
-//      "org.apache.spark.streaming.thunder.zeromq.WrappedZeroMQReceiver", url, topic)
-    //val lines = ZeroMQUtils.createStream(ssc, url, Subscribe(topic), bytesToStringIterator _)
+      "org.apache.spark.streaming.zeromq.ReflectedZeroMQStreamFactory", url, topic)
     val words = lines.flatMap(_.split(" "))
     val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)
     wordCounts.print()
